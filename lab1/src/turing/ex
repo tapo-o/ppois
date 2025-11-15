@@ -1,0 +1,8 @@
+tape=110011
+start=q0
+rule q0 1 q0 0 R
+rule q0 0 q0 1 R
+rule q0 _ q1 _ L
+rule q1 1 q1 0 L
+rule q1 0 q1 1 L
+rule q1 _ q0 _ R
