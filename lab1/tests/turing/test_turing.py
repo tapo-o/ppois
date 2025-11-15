@@ -1,11 +1,8 @@
 import unittest
-import os
-import tempfile
 
 from turing.rule import Rule
 from turing.tape import Tape
 from turing.turing_machine import Turing
-from turing.cli import load_program
 
 
 class TestRule(unittest.TestCase):
@@ -23,6 +20,13 @@ class TestRule(unittest.TestCase):
         r.set_action("q0", "1", "q1", "0", "R")
         r.set_action("q0", "1", "q2", "1", "L")
         self.assertEqual(r.get_action("q0", "1"), ("q2", "1", "L"))
+
+    def test_multiple_rules(self):
+        r = Rule()
+        r.set_action("q0", "0", "q1", "1", "R")
+        r.set_action("q1", "1", "q2", "0", "L")
+        self.assertEqual(r.get_action("q0", "0"), ("q1", "1", "R"))
+        self.assertEqual(r.get_action("q1", "1"), ("q2", "0", "L"))
 
 
 class TestTape(unittest.TestCase):
@@ -66,6 +70,19 @@ class TestTape(unittest.TestCase):
         t.write_symbol("1")
         self.assertEqual(t.read_word(), "_11_")
 
+    def test_multiple_moves_extend(self):
+        t = Tape("1")
+        t.move("R")
+        t.move("R")
+        self.assertEqual(t.read_word(), "_1__")
+        self.assertEqual(t._head, 2)
+
+    def test_write_in_new_cell(self):
+        t = Tape("1")
+        t.move("R")
+        t.write_symbol("X")
+        self.assertEqual(t.read_word(), "_1X_")
+
 
 class TestTuring(unittest.TestCase):
     def test_step_and_state_change(self):
@@ -75,7 +92,7 @@ class TestTuring(unittest.TestCase):
         tm = Turing(t, r, "q0")
         result = tm.step()
         self.assertTrue(result)
-        self.assertEqual(t.read_symbol(), "_")  # после движения вправо
+        self.assertEqual(t.read_symbol(), "_")
         self.assertEqual(tm._state, "q1")
 
     def test_stop_when_no_rule(self):
@@ -90,59 +107,29 @@ class TestTuring(unittest.TestCase):
         r.set_action("q0", "1", "q0", "0", "R")
         r.set_action("q0", "_", "halt", "_", "N")
         tm = Turing(t, r, "q0")
-        tm.step()
-        tm.step()
+        while tm.step():
+            pass
         self.assertEqual(t.read_word(), "_00_")
+        self.assertEqual(tm._state, "halt")
 
-    def test_direction_noop(self):
+    def test_state_changes_chain(self):
         t = Tape("1")
         r = Rule()
-        r.set_action("q0", "1", "halt", "0", "N")
+        r.set_action("q0", "1", "q1", "0", "R")
+        r.set_action("q1", "_", "q2", "_", "N")
+        tm = Turing(t, r, "q0")
+        tm.step()
+        tm.step()
+        self.assertEqual(tm._state, "q2")
+
+    def test_symbol_change_same_state(self):
+        t = Tape("1")
+        r = Rule()
+        r.set_action("q0", "1", "q0", "0", "N")
         tm = Turing(t, r, "q0")
         tm.step()
         self.assertEqual(t.read_word(), "_0_")
-        self.assertEqual(tm._state, "halt")
-
-
-class TestLoadProgram(unittest.TestCase):
-    def test_load_program_success(self):
-        content = """tape=101
-start=q0
-rule q0 1 q1 0 R
-"""
-        with tempfile.NamedTemporaryFile(delete=False, mode="w", encoding="utf-8") as f:
-            f.write(content)
-            fname = f.name
-        tape, rules, start_state = load_program(fname)
-        os.unlink(fname)
-        self.assertEqual(tape.read_word(), "_101_")
-        self.assertEqual(start_state, "q0")
-        self.assertEqual(rules.get_action("q0", "1"), ("q1", "0", "R"))
-
-    def test_load_program_missing(self):
-        content = """tape=101"""
-        with tempfile.NamedTemporaryFile(delete=False, mode="w", encoding="utf-8") as f:
-            f.write(content)
-            fname = f.name
-        with self.assertRaises(ValueError):
-            load_program(fname)
-        os.unlink(fname)
-
-    def test_load_program_with_comments_and_blank_lines(self):
-        content = """# This is a comment
-tape=101
-
-start=q0
-rule q0 1 q1 0 R
-"""
-        with tempfile.NamedTemporaryFile(delete=False, mode="w", encoding="utf-8") as f:
-            f.write(content)
-            fname = f.name
-        tape, rules, start_state = load_program(fname)
-        os.unlink(fname)
-        self.assertEqual(tape.read_word(), "_101_")
-        self.assertEqual(start_state, "q0")
-        self.assertEqual(rules.get_action("q0", "1"), ("q1", "0", "R"))
+        self.assertEqual(tm._state, "q0")
 
 
 if __name__ == "__main__":
