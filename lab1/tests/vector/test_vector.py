@@ -1,6 +1,6 @@
 import unittest
 from math import sqrt
-from vector.vector import Vector   # предполагаем, что твой класс лежит в файле vector.py
+from vector.Vector import Vector   # предполагаем, что твой класс лежит в файле vector.py
 
 class TestVector(unittest.TestCase):
 

@@ -1,8 +1,8 @@
 import unittest
 
-from turing.rule import Rule
-from turing.tape import Tape
-from turing.turing_machine import Turing
+from turing.Rule import Rule
+from turing.Tape import Tape
+from turing.Turing_machine import Turing
 
 
 class TestRule(unittest.TestCase):

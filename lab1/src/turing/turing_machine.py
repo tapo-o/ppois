@@ -1,5 +1,5 @@
-from turing.tape import Tape
-from turing.rule import Rule
+from turing.Tape import Tape
+from turing.Rule import Rule
 
 class Turing:
     def __init__(self, tape: Tape, rules: Rule, start_state: str):
