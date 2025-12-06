@@ -1,0 +1,14 @@
+from src.employers.Employee import Employee
+
+class Accountant(Employee):
+    def __init__(self, name: str):
+        super().__init__(name, "accountant")
+        self.__qualification = "Бухгалтер"
+    
+    # отчет создает
+    def compile_report(self, report, company) -> None:
+        report.collect_data(company)
+
+    # подтверждает операции
+    def verify_payment(self, payment) -> bool:
+        return payment.status() == "PAID"
